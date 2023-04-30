@@ -64,3 +64,24 @@ def register(username, password, role='unprivileged'):
 
 def delete_user(username):
     query('DELETE FROM user WHERE username = ?', (username,))
+
+
+def register_device():
+    pass
+
+def delete_device():
+    pass
+
+def update_device():
+    pass
+
+
+def register_room():
+    pass
+
+def delete_room():
+    pass
+
+def update_room():
+    pass
+

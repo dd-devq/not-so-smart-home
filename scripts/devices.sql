@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS device (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   operating_period TEXT NOT NULL,
-  state TEXT NOT NULL CHECK (state IN ('Fan', 'Light'))
+  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Sensor'))
 );
 
 DROP TABLE IF EXISTS fan;
@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS fan (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	device_id INTEGER NOT NULL,
 	rpm INTEGER NOT NULL,
+  fan_state TEXT NOT NULL,
 	temperature INTEGER NOT NULL,
-	state TEXT NOT NULL CHECK (state = 'Fan'),
+	dev_type TEXT NOT NULL CHECK (dev_type = 'Fan'),
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE,
-	FOREIGN KEY (state) REFERENCES device(state) ON DELETE CASCADE
+	FOREIGN KEY (dev_type) REFERENCES device(dev_type) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS light;
@@ -36,12 +37,26 @@ DROP TABLE IF EXISTS light;
 CREATE TABLE IF NOT EXISTS light (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   device_id INTEGER NOT NULL,
+  light_state TEXT NOT NULL,
   brightness INTEGER NOT NULL,
   color TEXT NOT NULL,
-	state TEXT NOT NULL CHECK (state = 'Light'),
+	dev_type TEXT NOT NULL CHECK (dev_type = 'Light'),
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE,
-	FOREIGN KEY (state) REFERENCES device(state) ON DELETE CASCADE
+	FOREIGN KEY (dev_type) REFERENCES device(dev_type) ON DELETE CASCADE
 );
+
+DROP TABLE IF EXISTS sensor;
+
+-- create table for sensor
+CREATE TABLE IF NOT EXISTS sensor (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  sensor_state TEXT NOT NULL,
+  device_id INTEGER NOT NULL,
+	type TEXT NOT NULL CHECK (type = 'Sensor'),
+	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE,
+	FOREIGN KEY (type) REFERENCES device(type) ON DELETE CASCADE
+);
+
 
 DROP TABLE IF EXISTS user_device;
 
@@ -81,9 +96,8 @@ DROP TABLE IF EXISTS system_log;
 -- create table for system log
 CREATE TABLE IF NOT EXISTS system_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  contact TEXT NOT NULL,
-  api_key TEXT NOT NULL,
-  address TEXT NOT NULL
+  log TEXT,
+  log_date DATE
 );
 
 DROP TABLE IF EXISTS system_record;
@@ -91,12 +105,11 @@ DROP TABLE IF EXISTS system_record;
 -- create table for system record
 CREATE TABLE IF NOT EXISTS system_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  home_address TEXT NOT NULL,
   user_id INTEGER NOT NULL,
   device_id INTEGER NOT NULL,
   room_id INTEGER NOT NULL,
-  system_log_id INTEGER NOT NULL,
   FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
   FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE,
   FOREIGN KEY (room_id) REFERENCES room(id) ON DELETE CASCADE,
-  FOREIGN KEY (system_log_id) REFERENCES system_log(id) ON DELETE CASCADE
 );
