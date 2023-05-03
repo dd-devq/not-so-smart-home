@@ -1,12 +1,17 @@
 from utils import *
 import sqlite3
+import configparser
+import app
 
-default_database = 'database/devices.db'
+
+def config_database():
+    config = configparser.ConfigParser()
+    config.read('config/config.ini')
+    default_database = config['Database']['database']
+    return default_database
 
 
-def construct_datebase(sql_script, database=default_database):
-    global default_database
-    default_database = database
+def construct_datebase(sql_script, database):
     conn = sqlite3.connect(database)
     with open(sql_script, 'r') as sql_file:
         queries = sql_file.read()
@@ -15,8 +20,13 @@ def construct_datebase(sql_script, database=default_database):
     conn.close()
 
 
-def query(query, args=(), one=False):
-    with sqlite3.connect(default_database) as conn:
+def setup_database():
+    pass
+
+
+def query(database, query, args=(), one=False):
+    print(database)
+    with sqlite3.connect(database) as conn:
         cursor = conn.cursor()
         if query.startswith('SELECT'):
             try:
@@ -42,8 +52,8 @@ def login(username, password):
     print(user)
 
 
-def register(username, password, role='unprivileged'):
-    query('INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
+def register(database, username, password, role='unprivileged'):
+    query(database, 'INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
           (username, password, role))
 
 
@@ -51,26 +61,14 @@ def delete_user(username):
     query('DELETE FROM user WHERE username = ?', (username,))
 
 
-def login(username, password):
-    user = query(
-        'SELECT username, password, role FROM user WHERE username = ?', (username,), one=True)
-    print(user)
+def register_device(database, name, operating_period, dev_type):
+    query(database, 'INSERT INTO device (name, operating_period, dev_type) VALUES (?, ?, ?)',
+          (name, operating_period, dev_type))
 
-
-def register(username, password, role='unprivileged'):
-    query('INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
-          (username, password, role))
-
-
-def delete_user(username):
-    query('DELETE FROM user WHERE username = ?', (username,))
-
-
-def register_device():
-    pass
 
 def delete_device():
     pass
+
 
 def update_device():
     pass
@@ -79,9 +77,10 @@ def update_device():
 def register_room():
     pass
 
+
 def delete_room():
     pass
 
+
 def update_room():
     pass
-

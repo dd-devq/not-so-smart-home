@@ -2,14 +2,8 @@ from Adafruit_IO import Client, Feed, RequestError
 import paho.mqtt.client as mqtt
 import sqlite3
 import time
-username = 'danh_nguyen'
-key = 'aio_RTGP18jZ1Pz8ThhSf0cBOEEWOm25'
-
-feeds = [
-    '{}/feeds/light'.format(username),
-    '{}/feeds/fan'.format(username),
-    '{}/feeds/humansensor'.format(username)
-]
+import configparser
+from datetime import datetime
 
 
 class Observer():
@@ -21,7 +15,7 @@ class DatabaseObserver(Observer):
     def __init__(self):
         pass
 
-    def update(self, status):
+    def update(self, feed, status):
         print(f"Database Updated: {status}")
 
 
@@ -33,12 +27,9 @@ class MQTTObserver(Observer):
         self.client.username_pw_set(username, key)
         self.client.connect("io.adafruit.com", 1883)
 
-    def add_topic(topic):
-        pass
-
     def update(self, feed, status):
-        msg_count = 0
         result = self.client.publish(feed, status)
+        time.sleep(0.1)
         stat = result[0]
         if stat == 0:
             print(f"Send `{status}` to topic `{feed}`")
@@ -47,11 +38,12 @@ class MQTTObserver(Observer):
 
 
 class LoggerObserver(Observer):
-    def __init__(self):
-        pass
+    def __init__(self, log_file):
+        self.log_file = log_file
 
-    def update(self, status):
-        print(f"Observer Updated: {status}")
+    def update(self, feed, status):
+        log = open(self.log_file, 'a')
+        log.write(str(datetime.now()) + '\n')
 
 
 class Device():
@@ -143,21 +135,21 @@ class HumanSensor(Device):
 
 class SystemRecord:
     key = 'aio_RTGP18jZ1Pz8ThhSf0cBOEEWOm25'
-    list_feed = ['Feed/Light']
     pass
 
 
-def setup():
-    pass
+def config_devices():
+    config = configparser.ConfigParser()
+    config.read('config/config.ini')
 
+    username = config['Adafruit']['username']
+    key = config['Adafruit']['key']
 
-if __name__ == '__main__':
-    db_obs = DatabaseObserver()
-    mqtt_obs = MQTTObserver(username, key)
-    light_device = Light('danh_nguyen/feeds/light', 'OFF', [mqtt_obs])
-    fan_device = Fan('danh_nguyen/feeds/fan', 'OFF', [mqtt_obs])
-    human_sensor_device = HumanSensor(
-        'danh_nguyen/feeds/humansensor', 'OFF', [mqtt_obs])
-    light_device.light_on()
-    fan_device.fan_on()
-    human_sensor_device.human_sensor_on()
+    feeds = config['Adafruit']['feeds'].split(',')
+
+    feed_prefix = username + '/feeds/'
+    feed_links = []
+    for feed in feeds:
+        feed_links.append(feed_prefix + feed)
+
+    return username, key, feed_links
