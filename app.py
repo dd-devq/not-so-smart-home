@@ -22,6 +22,7 @@ def init():
     default_database = config_database()
     username, key, feed_links = config_devices()
     construct_datebase('scripts/devices.sql', default_database)
+    setup_database(default_database)
 
     logger_obs = LoggerObserver('log/activities.log')
     db_obs = DatabaseObserver()
@@ -74,17 +75,11 @@ def test():
     return 'testing'
 
 
-@app.route('/data')
-def test1():
-    devices['light'][0].light_on()
-    return 'testing'
-
-
 if __name__ == "__main__":
     init()
-    receiver_thread = threading.Thread(target=receiver)
-    receiver_thread.start()
-    app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
+    # receiver_thread = threading.Thread(target=receiver)
+    # receiver_thread.start()
+    # app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
 
 
 @ app.errorhandler(404)

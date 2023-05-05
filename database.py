@@ -20,12 +20,44 @@ def construct_datebase(sql_script, database):
     conn.close()
 
 
-def setup_database():
-    pass
+def setup_database(database):
+    config = configparser.ConfigParser()
+
+    config.read('config/data.ini')
+    for key in config['User']:
+        user = config['User'][key].split(',')
+        register_user(database, user[0], user[1], user[2])
+
+    for key in config['Room']:
+        room = config['Room'][key].split(',')
+        register_room(database, room[0], room[1], room[2], room[3])
+
+    for key in config['Device']:
+        device = config['Device'][key].split(',')
+        register_device(database, device[0], device[1], device[2])
+
+    for key in config['Room-Device']:
+        devices = config['Room-Device'][key].split(',')
+        if len(devices) != 1 and len(devices) != 0:
+            for device in devices:
+                register_room_device(database, key[1:], device[1:])
+        elif len(devices) == 1 and devices[0] != '':
+            register_room_device(database, key[1:], devices[0][1:])
+        else:
+            register_room_device(database, key[1:])
+
+    for key in config['User-Device']:
+        devices = config['User-Device'][key].split(',')
+        if len(devices) != 1 and len(devices) != 0:
+            for device in devices:
+                register_user_device(database, key[1:], device[1:])
+        elif len(devices) == 1 and devices[0] != '':
+            register_user_device(database, key[1:], devices[0][1:])
+        else:
+            register_user_device(database, key[1:])
 
 
 def query(database, query, args=(), one=False):
-    print(database)
     with sqlite3.connect(database) as conn:
         cursor = conn.cursor()
         if query.startswith('SELECT'):
@@ -49,10 +81,9 @@ def query(database, query, args=(), one=False):
 def login(username, password):
     user = query(
         'SELECT username, password, role FROM user WHERE username = ?', (username,), one=True)
-    print(user)
 
 
-def register(database, username, password, role='unprivileged'):
+def register_user(database, username, password, role='unprivileged'):
     query(database, 'INSERT INTO user (username, password, role) VALUES (?, ?, ?)',
           (username, password, role))
 
@@ -66,20 +97,23 @@ def register_device(database, name, operating_period, dev_type):
           (name, operating_period, dev_type))
 
 
-def delete_device():
-    pass
+def register_room_device(database, room_id, device_id=0):
+    query(database, 'INSERT INTO room_device (room_id, device_id) VALUES (?, ?)',
+          (room_id, device_id))
 
 
-def update_device():
-    pass
+def register_user_device(database, user_id, device_id=0):
+    query(database, 'INSERT INTO user_device (user_id, device_id) VALUES (?, ?)',
+          (user_id, device_id))
 
 
-def register_room():
-    pass
+def delete_device(name):
+    query('DELETE FROM user WHERE name = ?', (name))
 
 
-def delete_room():
-    pass
+def register_room(database, room_type, temperature, humidity, luminance):
+    query(database, 'INSERT INTO room (room_type, temperature, humidity, luminance) VALUES (?, ?, ?, ?)',
+          (room_type, temperature, humidity, luminance))
 
 
 def update_room():
