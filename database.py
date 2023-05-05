@@ -58,7 +58,7 @@ def register(database, username, password, role='unprivileged'):
 
 
 def delete_user(username):
-    query('DELETE FROM user WHERE username = ?', (username,))
+    query('DELETE FROM user WHERE username = ?', (username))
 
 
 def register_device(database, name, operating_period, dev_type):

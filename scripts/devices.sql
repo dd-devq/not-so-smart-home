@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS device (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   operating_period TEXT NOT NULL,
-  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Sensor'))
+  room_id INTEGER,
+  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Sensor')),
+  FOREIGN KEY (room_id) REFERENCES room(id)
 );
 
 
@@ -49,7 +51,6 @@ CREATE TABLE IF NOT EXISTS light (
 );
 
 
-
 -- create table for sensor
 CREATE TABLE IF NOT EXISTS sensor (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,8 +60,6 @@ CREATE TABLE IF NOT EXISTS sensor (
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE,
 	FOREIGN KEY (dev_type) REFERENCES device(dev_type) ON DELETE CASCADE
 );
-
-
 
 
 -- create table for user-device relationships
@@ -81,17 +80,6 @@ CREATE TABLE IF NOT EXISTS room (
   humidity INTEGER NOT NULL,
   luminance INTEGER NOT NULL
 );
-
-
--- create table for room-device relationships
-CREATE TABLE IF NOT EXISTS room_device (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  room_id INTEGER NOT NULL,
-  device_id INTEGER NOT NULL,
-  FOREIGN KEY (room_id) REFERENCES room(id) ON DELETE CASCADE,
-  FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
-);
-
 
 
 -- create table for system log

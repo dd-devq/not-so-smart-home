@@ -1,11 +1,12 @@
 from flask import *
 from database import *
 from devices import *
+import threading
 
 app = Flask(__name__)
 
 default_database = None
-
+sleep_time = 10
 username, key, feed_links = None, None, None
 logger_obs, db_obs, mqtt_obs = None, None, None
 devices = {
@@ -42,34 +43,66 @@ def init():
                 HumanSensor(feed, 'OFF', [mqtt_obs, logger_obs, db_obs]))
 
 
+def on_message(client, userdata, message):
+    global sleep_time
+    sleep_time = 10
+    value = message.payload.decode('utf-8')
+    print(f'Received message: {value}')
+
+
+def on_connect(client, userdata, flags, rc):
+
+    for feed in feed_links:
+        client.subscribe(feed)
+
+
+def receiver():
+    client = mqtt.Client()
+    client.username_pw_set(username, key)
+    client.connect("io.adafruit.com", 1883)
+    client.on_connect = on_connect
+    client.on_message = on_message
+
+    client.loop_start()
+    time.sleep(sleep_time)
+    client.loop_stop()
+
+
 @app.route('/')
 def test():
     devices['light'][0].light_on()
     return 'testing'
 
 
+@app.route('/data')
+def test1():
+    devices['light'][0].light_on()
+    return 'testing'
+
+
 if __name__ == "__main__":
     init()
-    register_device(default_database, 'MKASD', 'test period', 'Fan')
+    receiver_thread = threading.Thread(target=receiver)
+    receiver_thread.start()
     app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
 
 
-@app.errorhandler(404)
+@ app.errorhandler(404)
 def not_found(error):
     return response('404 Not Found'), 404
 
 
-@app.errorhandler(403)
+@ app.errorhandler(403)
 def forbidden(error):
     return response('403 Forbidden'), 403
 
 
-@app.errorhandler(400)
+@ app.errorhandler(400)
 def bad_request(error):
     return response('400 Bad Request'), 400
 
 
-@app.errorhandler(Exception)
+@ app.errorhandler(Exception)
 def handle_error(error):
     message = error.description if hasattr(error, 'description') else [
         str(x) for x in error.args]
