@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS light (
 );
 
 
--- create table for sensor
-CREATE TABLE IF NOT EXISTS sensor (
+-- create table for switch
+CREATE TABLE IF NOT EXISTS switch (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sensor_state TEXT NOT NULL,
   device_id INTEGER NOT NULL,
@@ -104,7 +104,6 @@ BEGIN
   INSERT INTO light (device_id, brightness, light_state, color)
   VALUES (NEW.id, 00, 'OFF', '#FFFFFF');
 END;
-
 
 
 CREATE TRIGGER IF NOT EXISTS insert_sensor AFTER INSERT ON device

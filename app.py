@@ -8,11 +8,12 @@ app = Flask(__name__)
 default_database = None
 sleep_time = 10
 username, key, feed_links = None, None, None
+sensor = ['cambien1', 'cambien2', 'cambien3']
 logger_obs, db_obs, mqtt_obs = None, None, None
 devices = {
     'light': [],
     'fan': [],
-    'humansensor': []
+    'switch': []
 }
 
 
@@ -30,18 +31,18 @@ def init():
     devices = {
         'light': [],
         'fan': [],
-        'humansensor': []
+        'switch': []
     }
     for feed in feed_links:
         if 'light' in feed:
             devices['light'].append(
-                Light(feed, 'OFF', [mqtt_obs, logger_obs, db_obs]))
+                Light(feed, '00', [mqtt_obs, logger_obs, db_obs]))
         elif 'fan' in feed:
             devices['fan'].append(
-                Fan(feed, 'OFF', [mqtt_obs, logger_obs, db_obs]))
-        elif 'humansensor' in feed:
-            devices['humansensor'].append(
-                HumanSensor(feed, 'OFF', [mqtt_obs, logger_obs, db_obs]))
+                Fan(feed, '0', [mqtt_obs, logger_obs, db_obs]))
+        elif 'mode' in feed:
+            devices['switch'].append(
+                Switch(feed, '000', [mqtt_obs, logger_obs, db_obs]))
 
 
 def on_message(client, userdata, message):
@@ -53,7 +54,7 @@ def on_message(client, userdata, message):
 
 def on_connect(client, userdata, flags, rc):
 
-    for feed in feed_links:
+    for feed in sensor:
         client.subscribe(feed)
 
 
@@ -70,8 +71,55 @@ def receiver():
 
 
 @app.route('/')
-def test():
+def x():
+    return 'home'
+
+
+@app.route('/lights', methods=['GET'])
+def lights():
+    return jsonify(get_all_lights(default_database))
+
+
+@app.route('/user/<string:username>', methods=['GET'])
+def user(username):
+    print(login(default_database, username))
+    return jsonify(login(default_database, username))
+
+
+@app.route('/lights/<int:id>/on')
+def light_on(id):
     devices['light'][0].light_on()
+
+    return 'testing'
+
+
+@app.route('/light/<int:id>/off')
+def light_off():
+    devices['light'][0].light_off()
+    return 'testing'
+
+
+@app.route('/fan/<int:id>/on')
+def fan_on():
+    devices['fan'][0].fan_on()
+    return 'testing'
+
+
+@app.route('/fan/<int:id>/off')
+def fan_off():
+    devices['fan'][0].fan_off()
+    return 'testing'
+
+
+@app.route('/mode/<int:id>/on')
+def switch_on():
+    devices['switch'][0].switch_on()
+    return 'testing'
+
+
+@app.route('/mode/<int:id>/off')
+def switch_off():
+    devices['switch'][0].switch_off()
     return 'testing'
 
 
@@ -79,7 +127,7 @@ if __name__ == "__main__":
     init()
     # receiver_thread = threading.Thread(target=receiver)
     # receiver_thread.start()
-    # app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
+    app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
 
 
 @ app.errorhandler(404)

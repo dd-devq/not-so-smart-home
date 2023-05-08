@@ -78,9 +78,10 @@ def query(database, query, args=(), one=False):
     conn.close()
 
 
-def login(username, password):
-    user = query(
-        'SELECT username, password, role FROM user WHERE username = ?', (username,), one=True)
+def login(database, username):
+    user = query(database,
+                 'SELECT username, password, role FROM user WHERE username = ?', (username,), one=True)
+    return user
 
 
 def register_user(database, username, password, role='unprivileged'):
@@ -105,6 +106,10 @@ def register_room_device(database, room_id, device_id=0):
 def register_user_device(database, user_id, device_id=0):
     query(database, 'INSERT INTO user_device (user_id, device_id) VALUES (?, ?)',
           (user_id, device_id))
+
+
+def get_all_lights(database):
+    return query(database, 'SELECT * FROM light')
 
 
 def delete_device(name):

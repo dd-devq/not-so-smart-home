@@ -43,7 +43,22 @@ class LoggerObserver(Observer):
 
     def update(self, feed, status):
         log = open(self.log_file, 'a')
-        log.write(str(datetime.now()) + '\n')
+        device = None
+        if 'light' in feed:
+            device = ' Light: '
+        if 'fan' in feed:
+            device = ' Fan: '
+        if 'mode' in feed:
+            device = ' Switch: '
+
+        stat = None
+        if '0' in status:
+            stat = 'OFF'
+
+        if '1' in status:
+            stat = 'ON'
+
+        log.write(str(datetime.now()) + device + stat + '\n')
 
 
 class Device():
@@ -62,7 +77,7 @@ class Device():
 
 
 class Light(Device):
-    def __init__(self, feed, status="OFF", observers=[]):
+    def __init__(self, feed, status="00", observers=[]):
         super().__init__(feed, observers)
         self.status = status
 
@@ -77,16 +92,16 @@ class Light(Device):
             observer.update(self.feed, self.status)
 
     def light_off(self):
-        self.status = 'OFF'
+        self.status = '00'
         self.notify()
 
     def light_on(self):
-        self.status = 'ON'
+        self.status = '11'
         self.notify()
 
 
 class Fan(Device):
-    def __init__(self, feed, status='OFF', observers=[]):
+    def __init__(self, feed, status='0', observers=[]):
         super().__init__(feed, observers)
         self.status = status
 
@@ -101,16 +116,16 @@ class Fan(Device):
             observer.update(self.feed, self.status)
 
     def fan_off(self):
-        self.status = 'OFF'
+        self.status = '0'
         self.notify()
 
     def fan_on(self):
-        self.status = 'ON'
+        self.status = '1'
         self.notify()
 
 
-class HumanSensor(Device):
-    def __init__(self, feed, status='OFF', observers=[]):
+class Switch(Device):
+    def __init__(self, feed, status='000', observers=[]):
         super().__init__(feed, observers)
         self.status = status
 
@@ -124,12 +139,12 @@ class HumanSensor(Device):
         for observer in self.observers:
             observer.update(self.feed, self.status)
 
-    def human_sensor_off(self):
-        self.status = 'OFF'
+    def switch_off(self):
+        self.status = '000'
         self.notify()
 
-    def human_sensor_on(self):
-        self.status = 'ON'
+    def switch_on(self):
+        self.status = '111'
         self.notify()
 
 
