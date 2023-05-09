@@ -108,12 +108,16 @@ def register_user_device(database, user_id, device_id=0):
           (user_id, device_id))
 
 
-def get_all_lights(database):
+def get_lights(database):
     return query(database, 'SELECT * FROM light')
 
 
-def delete_device(name):
-    query('DELETE FROM user WHERE name = ?', (name))
+def get_fans(database):
+    return query(database, 'SELECT * FROM fan')
+
+
+def get_modes(database):
+    return query(database, 'SELECT * FROM switch')
 
 
 def register_room(database, room_type, temperature, humidity, luminance):
@@ -121,5 +125,34 @@ def register_room(database, room_type, temperature, humidity, luminance):
           (room_type, temperature, humidity, luminance))
 
 
-def update_room():
-    pass
+def update_room(database, room_id, temperature, humidity, luminance):
+    query(database, 'UPDATE room SET temperature = ?, humidity = ?, luminance = ? WHERE id = ?',
+          (temperature, humidity, luminance, room_id))
+
+
+def get_deivce(database, device_id):
+    return query(database, 'SELECT * FROM device WHERE id = ?', (device_id,))
+
+
+def get_user_device(database, user_id):
+    device_ids = query(
+        database, 'SELECT device_id FROM user_device WHERE user_id = ?', (user_id,))
+    devices = []
+    for id in device_ids:
+        devices.append(get_deivce(database, id['device_id']))
+    return devices
+
+
+def update_fan(database, id, fan_state, rpm, temperature):
+    query(database, 'UPDATE fan SET rpm = ?, fan_state = ?, temperature = ? WHERE id = ?',
+          (rpm, fan_state, temperature, id))
+
+
+def update_light(database, id, light_state, brightness, color='#FFFFFF'):
+    query(database, 'UPDATE light SET light_state = ?, brightness = ?, color = ? WHERE id = ?',
+          (light_state, brightness, color, id))
+
+
+def update_mode(database, id, mode_state):
+    query(database, 'UPDATE switch SET switch_state = ? WHERE id = ?',
+          (mode_state, id))

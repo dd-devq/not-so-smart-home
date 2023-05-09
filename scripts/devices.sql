@@ -1,8 +1,5 @@
-SELECT 'DROP TABLE IF EXISTS ' || name || ';' 
-FROM sqlite_master 
-WHERE type = 'table';
 
-
+DROP TABLE IF EXISTS user;
 
 CREATE TABLE IF NOT EXISTS user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,16 +8,18 @@ CREATE TABLE IF NOT EXISTS user (
   role TEXT NOT NULL CHECK (role IN ('privileged', 'unprivileged')) DEFAULT 'unprivileged'
 );
 
-
+DROP TABLE IF EXISTS device;
 
 -- create table for devices
 CREATE TABLE IF NOT EXISTS device (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE NOT NULL,
   operating_period TEXT NOT NULL,
-  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Sensor'))
+  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Switch'))
 );
 
+
+DROP TABLE IF EXISTS fan;
 
 -- create table for fans
 CREATE TABLE IF NOT EXISTS fan (
@@ -32,6 +31,7 @@ CREATE TABLE IF NOT EXISTS fan (
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS light;
 
 
 -- create table for lights
@@ -44,14 +44,19 @@ CREATE TABLE IF NOT EXISTS light (
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS switch;
+
 
 -- create table for switch
 CREATE TABLE IF NOT EXISTS switch (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  sensor_state TEXT NOT NULL,
+  switch_state TEXT NOT NULL,
   device_id INTEGER NOT NULL,
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
+
+
+DROP TABLE IF EXISTS user_device;
 
 
 -- create table for user-device relationships
@@ -63,6 +68,7 @@ CREATE TABLE IF NOT EXISTS user_device (
   FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS room;
 
 -- create table for rooms
 CREATE TABLE IF NOT EXISTS room (
@@ -73,6 +79,9 @@ CREATE TABLE IF NOT EXISTS room (
   luminance INTEGER NOT NULL
 );
 
+DROP TABLE IF EXISTS room_device;
+
+
 -- create table for user-device relationships
 CREATE TABLE IF NOT EXISTS room_device (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,6 +90,8 @@ CREATE TABLE IF NOT EXISTS room_device (
   FOREIGN KEY (room_id) REFERENCES room(id) ON DELETE CASCADE,
   FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
+
+DROP TABLE IF EXISTS system_log;
 
 
 -- create table for system log
@@ -102,13 +113,13 @@ CREATE TRIGGER IF NOT EXISTS insert_light AFTER INSERT ON device
 WHEN NEW.dev_type = 'Light'
 BEGIN
   INSERT INTO light (device_id, brightness, light_state, color)
-  VALUES (NEW.id, 00, 'OFF', '#FFFFFF');
+  VALUES (NEW.id, 00, '00', '#FFFFFF');
 END;
 
 
-CREATE TRIGGER IF NOT EXISTS insert_sensor AFTER INSERT ON device
-WHEN NEW.dev_type = 'Sensor'
+CREATE TRIGGER IF NOT EXISTS insert_switch AFTER INSERT ON device
+WHEN NEW.dev_type = 'Switch'
 BEGIN
-  INSERT INTO sensor (device_id, sensor_state)
-  VALUES (NEW.id, 'OFF');
+  INSERT INTO switch (device_id, switch_state)
+  VALUES (NEW.id, '000');
 END;

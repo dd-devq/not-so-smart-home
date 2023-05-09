@@ -4,19 +4,30 @@ import sqlite3
 import time
 import configparser
 from datetime import datetime
+import database
 
 
 class Observer():
-    def update(self, status):
+    def update(self, feed, status=()):
         pass
 
 
 class DatabaseObserver(Observer):
-    def __init__(self):
-        pass
+    def __init__(self, database):
+        self.database = database
 
-    def update(self, feed, status):
-        print(f"Database Updated: {status}")
+    def update(self, feed, status=()):
+
+        stat = status[0]
+        if len(status) > 1:
+            val_1 = status[1]
+            val_2 = status[2]
+        if 'light' in feed:
+            database.update_light(self.database, 1, stat, val_1, val_2)
+        if 'fan' in feed:
+            database.update_fan(self.database, 1, stat, val_1, val_2)
+        if 'mode' in feed:
+            database.update_mode(self.database, 1, stat)
 
 
 class MQTTObserver(Observer):
@@ -27,38 +38,37 @@ class MQTTObserver(Observer):
         self.client.username_pw_set(username, key)
         self.client.connect("io.adafruit.com", 1883)
 
-    def update(self, feed, status):
-        result = self.client.publish(feed, status)
+    def update(self, feed, status=()):
+        stat = status[0]
+        result = self.client.publish(feed, stat)
         time.sleep(0.1)
-        stat = result[0]
-        if stat == 0:
-            print(f"Send `{status}` to topic `{feed}`")
-        else:
-            print(f"Failed to send message to feed {feed}")
 
 
 class LoggerObserver(Observer):
     def __init__(self, log_file):
         self.log_file = log_file
 
-    def update(self, feed, status):
+    def update(self, feed, status=()):
+        stat = status[0]
+        if len(status) > 1:
+            val_1 = status[1]
+            val_2 = status[2]
         log = open(self.log_file, 'a')
         device = None
         if 'light' in feed:
             device = ' Light: '
         if 'fan' in feed:
-            device = ' Fan: '
+            device = ' Fan: ' + str(status)
+            log.write(str(datetime.now()) + device + '\n')
+            return
         if 'mode' in feed:
             device = ' Switch: '
-
-        stat = None
-        if '0' in status:
-            stat = 'OFF'
-
-        if '1' in status:
-            stat = 'ON'
-
-        log.write(str(datetime.now()) + device + stat + '\n')
+        temp = None
+        if '0' in stat:
+            temp = 'OFF'
+        if '1' in stat:
+            temp = 'ON'
+        log.write(str(datetime.now()) + device + temp + '\n')
 
 
 class Device():
@@ -77,9 +87,11 @@ class Device():
 
 
 class Light(Device):
-    def __init__(self, feed, status="00", observers=[]):
+    def __init__(self, feed, status="00", lumin=0, color='#FFFFFF', observers=[]):
         super().__init__(feed, observers)
         self.status = status
+        self.lumin = lumin
+        self.color = color
 
     def attach(self, observer):
         self.observers.append(observer)
@@ -89,21 +101,26 @@ class Light(Device):
 
     def notify(self):
         for observer in self.observers:
-            observer.update(self.feed, self.status)
+            observer.update(self.feed, (self.status, self.lumin, self.color))
 
     def light_off(self):
         self.status = '00'
+        self.lumin = 0
         self.notify()
 
-    def light_on(self):
+    def light_on(self, lumin, color='#FFFFFF'):
         self.status = '11'
+        self.lumin = lumin
+        self.color = color
         self.notify()
 
 
 class Fan(Device):
-    def __init__(self, feed, status='0', observers=[]):
+    def __init__(self, feed, status='OFF', speed='0', temperature=0, observers=[]):
         super().__init__(feed, observers)
         self.status = status
+        self.speed = speed
+        self.temperature = temperature
 
     def attach(self, observer):
         self.observers.append(observer)
@@ -113,14 +130,19 @@ class Fan(Device):
 
     def notify(self):
         for observer in self.observers:
-            observer.update(self.feed, self.status)
+            observer.update(
+                self.feed, (self.status, self.speed, self.temperature))
 
-    def fan_off(self):
-        self.status = '0'
+    def fan_off(self, temperature):
+        self.speed = '0'
+        self.temperature = temperature
+        self.status = 'OFF'
         self.notify()
 
-    def fan_on(self):
-        self.status = '1'
+    def fan_on(self, speed, temperature):
+        self.status = 'ON'
+        self.temperature = temperature
+        self.speed = speed
         self.notify()
 
 
@@ -137,7 +159,7 @@ class Switch(Device):
 
     def notify(self):
         for observer in self.observers:
-            observer.update(self.feed, self.status)
+            observer.update(self.feed, (self.status,))
 
     def switch_off(self):
         self.status = '000'
@@ -146,11 +168,6 @@ class Switch(Device):
     def switch_on(self):
         self.status = '111'
         self.notify()
-
-
-class SystemRecord:
-    key = 'aio_RTGP18jZ1Pz8ThhSf0cBOEEWOm25'
-    pass
 
 
 def config_devices():

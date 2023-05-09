@@ -9,16 +9,13 @@ default_database = None
 sleep_time = 10
 username, key, feed_links = None, None, None
 sensor = ['cambien1', 'cambien2', 'cambien3']
+temperature, lumin, color, humidity = 0, 0, '#FFFFFF', 0
 logger_obs, db_obs, mqtt_obs = None, None, None
-devices = {
-    'light': [],
-    'fan': [],
-    'switch': []
-}
+fan, light, mode = None, None, None
 
 
 def init():
-    global default_database, username, key, feed_links, logger_obs, db_obs, mqtt_obs, devices
+    global default_database, username, key, feed_links, logger_obs, db_obs, mqtt_obs, fan, light, mode
     database_folder()
     default_database = config_database()
     username, key, feed_links = config_devices()
@@ -26,23 +23,14 @@ def init():
     setup_database(default_database)
 
     logger_obs = LoggerObserver('log/activities.log')
-    db_obs = DatabaseObserver()
+    db_obs = DatabaseObserver(default_database)
     mqtt_obs = MQTTObserver(username, key)
-    devices = {
-        'light': [],
-        'fan': [],
-        'switch': []
-    }
-    for feed in feed_links:
-        if 'light' in feed:
-            devices['light'].append(
-                Light(feed, '00', [mqtt_obs, logger_obs, db_obs]))
-        elif 'fan' in feed:
-            devices['fan'].append(
-                Fan(feed, '0', [mqtt_obs, logger_obs, db_obs]))
-        elif 'mode' in feed:
-            devices['switch'].append(
-                Switch(feed, '000', [mqtt_obs, logger_obs, db_obs]))
+
+    light = Light(feed_links[0], '00', 0, '#FFFFFF',
+                  [mqtt_obs, logger_obs, db_obs])
+    fan = Fan(feed_links[1], 'OFF', '0', temperature,
+              [mqtt_obs, logger_obs, db_obs])
+    mode = Switch(feed_links[2], '000', [mqtt_obs, logger_obs, db_obs])
 
 
 def on_message(client, userdata, message):
@@ -70,63 +58,68 @@ def receiver():
     client.loop_stop()
 
 
-@app.route('/')
+@ app.route('/')
 def x():
     return 'home'
 
 
-@app.route('/lights', methods=['GET'])
+@ app.route('/light', methods=['GET'])
 def lights():
-    return jsonify(get_all_lights(default_database))
+    return jsonify(get_lights(default_database))
 
 
-@app.route('/user/<string:username>', methods=['GET'])
+@ app.route('/user/<string:username>', methods=['GET'])
 def user(username):
-    print(login(default_database, username))
     return jsonify(login(default_database, username))
 
 
-@app.route('/lights/<int:id>/on')
-def light_on(id):
-    devices['light'][0].light_on()
+@ app.route('/light/on')
+def light_on():
+    light.light_on(lumin, color)
 
     return 'testing'
 
 
-@app.route('/light/<int:id>/off')
+@ app.route('/light/off')
 def light_off():
-    devices['light'][0].light_off()
+    light.light_off()
     return 'testing'
 
 
-@app.route('/fan/<int:id>/on')
+@ app.route('/fan/on')
 def fan_on():
-    devices['fan'][0].fan_on()
+    speed = request.args.get('speed')
+    fan.fan_on(speed, temperature)
     return 'testing'
 
 
-@app.route('/fan/<int:id>/off')
+@ app.route('/fan/off')
 def fan_off():
-    devices['fan'][0].fan_off()
+    fan.fan_off(temperature)
     return 'testing'
 
 
-@app.route('/mode/<int:id>/on')
+@ app.route('/mode/on')
 def switch_on():
-    devices['switch'][0].switch_on()
+    mode.switch_on()
     return 'testing'
 
 
-@app.route('/mode/<int:id>/off')
+@ app.route('/mode/off')
 def switch_off():
-    devices['switch'][0].switch_off()
+    mode.switch_off()
     return 'testing'
+
+
+@app.route('/user/<int:id>/devices')
+def user_device(id):
+    return jsonify(get_user_device(default_database, id))
 
 
 if __name__ == "__main__":
     init()
-    # receiver_thread = threading.Thread(target=receiver)
-    # receiver_thread.start()
+    receiver_thread = threading.Thread(target=receiver)
+    receiver_thread.start()
     app.run(host='0.0.0.0', port=5000, debug=False, use_evalex=False)
 
 
