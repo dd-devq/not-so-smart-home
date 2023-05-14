@@ -6,9 +6,9 @@ import threading
 app = Flask(__name__)
 
 default_database = None
-sleep_time = 10
+sleep_time = 60
 username, key, feed_links = None, None, None
-sensor = ['cambien1', 'cambien2', 'cambien3']
+sensors = ['cambien1', 'cambien2', 'cambien3']
 temperature, lumin, color, humidity = 0, 0, '#FFFFFF', 0
 logger_obs, db_obs, mqtt_obs = None, None, None
 fan, light, mode = None, None, None
@@ -33,34 +33,26 @@ def init():
     mode = Switch(feed_links[2], '000', [mqtt_obs, logger_obs, db_obs])
 
 
-def on_message(client, userdata, message):
-    global sleep_time
-    sleep_time = 10
-    value = message.payload.decode('utf-8')
-    print(f'Received message: {value}')
-
-
-def on_connect(client, userdata, flags, rc):
-
-    for feed in sensor:
-        client.subscribe(feed)
-
-
 def receiver():
-    client = mqtt.Client()
-    client.username_pw_set(username, key)
-    client.connect("io.adafruit.com", 1883)
-    client.on_connect = on_connect
-    client.on_message = on_message
-
-    client.loop_start()
-    time.sleep(sleep_time)
-    client.loop_stop()
+    client = Client(username, key)
+    global temperature, lumin, humidity
+    while True:
+        temperature = client.data(sensors[0])[0].value
+        humidity = client.data(sensors[1])[0].value
+        lumin = client.data(sensors[2])[0].value
+        time.sleep(24)
+        print('Update')
 
 
 @ app.route('/')
 def x():
     return 'home'
+
+
+@app.route('/sensor', methods=['GET'])
+def sensor():
+    data = [temperature, humidity, lumin]
+    return jsonify(data)
 
 
 @ app.route('/light', methods=['GET'])
