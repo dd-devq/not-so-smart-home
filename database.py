@@ -120,6 +120,10 @@ def get_modes(database):
     return query(database, 'SELECT * FROM switch')
 
 
+def get_music_player(database):
+    return query(database, 'SELECT * FROM music_player')
+
+
 def register_room(database, room_type, temperature, humidity, luminance):
     query(database, 'INSERT INTO room (room_type, temperature, humidity, luminance) VALUES (?, ?, ?, ?)',
           (room_type, temperature, humidity, luminance))
@@ -155,4 +159,9 @@ def update_light(database, id, light_state, brightness, color='#FFFFFF'):
 
 def update_mode(database, id, mode_state):
     query(database, 'UPDATE switch SET switch_state = ? WHERE id = ?',
+          (mode_state, id))
+
+
+def update_music_player(database, id, mode_state):
+    query(database, 'UPDATE music_player SET music_player_state = ? WHERE id = ?',
           (mode_state, id))

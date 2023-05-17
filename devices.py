@@ -28,6 +28,8 @@ class DatabaseObserver(Observer):
             database.update_fan(self.database, 1, stat, val_1, val_2)
         if 'mode' in feed:
             database.update_mode(self.database, 1, stat)
+        if 'music' in feed:
+            database.update_music_player(self.database, 1, stat)
 
 
 class MQTTObserver(Observer):
@@ -53,20 +55,26 @@ class LoggerObserver(Observer):
         if len(status) > 1:
             val_1 = status[1]
             val_2 = status[2]
+
         log = open(self.log_file, 'a')
         device = None
-        if 'light' in feed:
-            device = ' Light: '
+
         if 'fan' in feed:
-            device = ' Fan: ' + str(status)
+            device = ' Fan: ' + str(status).replace(" ", "")
             log.write(str(datetime.now()) + device + '\n')
             return
-        if 'mode' in feed:
+
+        if 'light' in feed:
+            device = ' Light: '
+        elif 'mode' in feed:
             device = ' Switch: '
+        elif 'music' in feed:
+            device = ' Music Player: '
         temp = None
+
         if '0' in stat:
             temp = 'OFF'
-        if '1' in stat:
+        elif '1' in stat:
             temp = 'ON'
         log.write(str(datetime.now()) + device + temp + '\n')
 
@@ -131,7 +139,7 @@ class Fan(Device):
     def notify(self):
         for observer in self.observers:
             observer.update(
-                self.feed, (self.status, self.speed, self.temperature))
+                self.feed, (self.speed, self.status, self.temperature))
 
     def fan_off(self, temperature):
         self.speed = '0'
@@ -167,6 +175,30 @@ class Switch(Device):
 
     def switch_on(self):
         self.status = '111'
+        self.notify()
+
+
+class MusicPlayer(Device):
+    def __init__(self, feed, status='0', observers=[]):
+        super().__init__(feed, observers)
+        self.status = status
+
+    def attach(self, observer):
+        self.observers.append(observer)
+
+    def dettach(self, observer):
+        self.observers.remove(observer)
+
+    def notify(self):
+        for observer in self.observers:
+            observer.update(self.feed, (self.status,))
+
+    def music_off(self):
+        self.status = '0'
+        self.notify()
+
+    def music_on(self):
+        self.status = '1'
         self.notify()
 
 

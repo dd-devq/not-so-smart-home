@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS device (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE NOT NULL,
   operating_period TEXT NOT NULL,
-  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Switch'))
+  dev_type TEXT NOT NULL CHECK (dev_type IN ('Fan', 'Light', 'Switch','MusicPlayer'))
 );
 
 
@@ -51,6 +51,17 @@ DROP TABLE IF EXISTS switch;
 CREATE TABLE IF NOT EXISTS switch (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   switch_state TEXT NOT NULL,
+  device_id INTEGER NOT NULL,
+	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS music_player;
+
+
+-- create table for music_player
+CREATE TABLE IF NOT EXISTS music_player (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  music_player_state TEXT NOT NULL,
   device_id INTEGER NOT NULL,
 	FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
@@ -91,16 +102,6 @@ CREATE TABLE IF NOT EXISTS room_device (
   FOREIGN KEY (device_id) REFERENCES device(id) ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS system_log;
-
-
--- create table for system log
-CREATE TABLE IF NOT EXISTS system_log (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  log_date DATE,
-  log TEXT
-);
-
 CREATE TRIGGER IF NOT EXISTS insert_fan AFTER INSERT ON device
 WHEN NEW.dev_type = 'Fan'
 BEGIN
@@ -122,4 +123,11 @@ WHEN NEW.dev_type = 'Switch'
 BEGIN
   INSERT INTO switch (device_id, switch_state)
   VALUES (NEW.id, '000');
+END;
+
+CREATE TRIGGER IF NOT EXISTS insert_music_player AFTER INSERT ON device
+WHEN NEW.dev_type = 'MusicPlayer'
+BEGIN
+  INSERT INTO music_player (device_id, music_player_state)
+  VALUES (NEW.id, '0');
 END;
