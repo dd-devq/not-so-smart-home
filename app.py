@@ -151,6 +151,10 @@ def fans():
 def modes():
     return jsonify(get_modes(default_database))
 
+@ app.route('/music_player', methods=['GET'])
+def music_player():
+    return jsonify(get_music_player(default_database))
+
 @ app.route('/user/<string:username>', methods=['GET'])
 def user(username):
     return jsonify(login(default_database, username))

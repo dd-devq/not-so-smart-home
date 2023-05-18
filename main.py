@@ -12,7 +12,7 @@ from Adafruit_IO import MQTTClient
 
 AIO_FEED_ID = [ "fan", "light","cambien1","cambien2","cambien3","mode","music"]
 AIO_USERNAME = "NgocKhanh07"
-AIO_KEY = "aio_OZAi31yZMJQbbnSCkpXtm6atvsEL"
+AIO_KEY = "aio_OxaJ94BXNLfMNhbqe7KYaFJ6P4kS"
 
 def connected(client):
     print("Ket noi thanh cong ...")

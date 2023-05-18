@@ -2,7 +2,7 @@ from Adafruit_IO import Client, Feed, RequestError
 import paho.mqtt.client as mqtt
 
 username = 'NgocKhanh07'
-key = 'aio_OZAi31yZMJQbbnSCkpXtm6atvsEL'
+key = 'aio_VIbs29g9owBVJUDJ0cjtxalnc7Dn'
 client = mqtt.Client()
 client.username_pw_set(username, key)
 client.connect("io.adafruit.com", 1883)
