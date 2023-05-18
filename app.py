@@ -143,6 +143,13 @@ def sensor():
 def lights():
     return jsonify(get_lights(default_database))
 
+@ app.route('/fan', methods=['GET'])
+def fans():
+    return jsonify(get_fans(default_database))
+
+@ app.route('/mode', methods=['GET'])
+def modes():
+    return jsonify(get_modes(default_database))
 
 @ app.route('/user/<string:username>', methods=['GET'])
 def user(username):

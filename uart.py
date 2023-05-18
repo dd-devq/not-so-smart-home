@@ -30,8 +30,8 @@ def processData(data, client):
        client.publish("cambien1", splitData[2])
     elif splitData[1] == "H":
        client.publish("cambien2", splitData[2])
-    elif splitData[1] == "P":
-       client.publish("cambien4", splitData[2])
+    elif splitData[1] == "L":
+       client.publish("cambien3", splitData[2])
 
 mess = ""
 read_splitdata = ""
@@ -52,5 +52,3 @@ def readSerial(client):
 
 def writeData(data):
     ser.write(str(data).encode())
-
-

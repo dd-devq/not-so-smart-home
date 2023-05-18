@@ -10,20 +10,19 @@ import numpy as np
 
 from Adafruit_IO import MQTTClient
 
-AIO_FEED_ID = [ "nutnhan1", "nutnhan2","cambien1","cambien2","cambien4","nutnhan3"]
+AIO_FEED_ID = [ "fan", "light","cambien1","cambien2","cambien3","mode","music"]
 AIO_USERNAME = "NgocKhanh07"
-AIO_KEY = "aio_gnKY52bhnuz8VsMgvMJHNW1R68Tw"
+AIO_KEY = "aio_OZAi31yZMJQbbnSCkpXtm6atvsEL"
 
 def connected(client):
     print("Ket noi thanh cong ...")
-    client.subscribe("nutnhan1")
-    client.subscribe("nutnhan2")
-    client.subscribe("nutnhan3")
-    # client.subscribe("cambien1")
-    # client.subscribe("cambien2")
-    client.subscribe("cambien4")
-
-
+    client.subscribe("fan")
+    client.subscribe("light")
+    client.subscribe("mode")
+    client.subscribe("cambien3")
+    client.subscribe("cambien1")
+    client.subscribe("cambien2")
+    client.subscribe("music")
 def subscribe(client , userdata , mid , granted_qos):
     print("Subscribe thanh cong ...")
 
@@ -33,21 +32,34 @@ def disconnected(client):
 
 def message(client , feed_id , payload):
     print("Nhan du lieu: " + payload)
-    if feed_id == "nutnhan1":
-        if payload == "11":
+    if feed_id == "fan":
+        if payload == "20":
             writeData("1")
-        else:
+        elif payload == "40":
             writeData("2")
-    if feed_id == "nutnhan2":
-        if payload == "1":
-           writeData("3")
-        else:
+        elif payload == "60":
+            writeData("3")
+        elif payload == "80":
             writeData("4")
-    if feed_id == "nutnhan3":
-        if payload == "111":
-           writeData("5")
+        elif payload == "100":
+            writeData("5")
         else:
             writeData("6")
+    if feed_id == "light":
+        if payload == "11":
+           writeData("7")
+        else:
+            writeData("8")
+    if feed_id == "mode":
+        if payload == "111":
+           writeData("9")
+        else:
+            writeData("10")
+    if feed_id == "music":
+        if payload == "1":
+            writeData("11")
+        else:
+            writeData("12")
 
 def uart_write(data):
     ser.write((str(data) + "#").encode())
@@ -61,10 +73,14 @@ client.on_subscribe = subscribe
 client.connect()
 client.loop_background()
 
-counter_1 = 10
-counter_2 = 5
-counter_3 = 1
+counter_temp = 10
+counter_button = 1
 while True:
+    if(counter_temp <= 0):
+        counter_temp = 10
+        readSerial(client)
+    else:
+        counter_temp = counter_temp - 1
 
-    readSerial(client)
+
     time.sleep(1)

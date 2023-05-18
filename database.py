@@ -67,7 +67,7 @@ def query(database, query, args=(), one=False):
                            for idx, value in enumerate(row)) for row in cursor.fetchall()]
                 return (rv[0] if rv else None) if one else rv
             except sqlite3.IntegrityError as error:
-                print(err)
+                print(error)
                 return None
         else:
             try:
@@ -80,7 +80,7 @@ def query(database, query, args=(), one=False):
 
 def login(database, username):
     user = query(database,
-                 'SELECT username, password, role FROM user WHERE username = ?', (username,), one=True)
+                 'SELECT id, username, password, role FROM user WHERE username = ?', (username,), one=True)
     return user
 
 
@@ -141,13 +141,15 @@ def get_deivce(database, device_id):
 def get_user_device(database, user_id):
     device_ids = query(
         database, 'SELECT device_id FROM user_device WHERE user_id = ?', (user_id,))
+    list = []
     devices = []
     for id in device_ids:
-        devices.append(get_deivce(database, id['device_id']))
+        list.append(get_deivce(database, id['device_id']))
+    devices = [item for sublist in list for item in sublist]
     return devices
 
 
-def update_fan(database, id, fan_state, rpm, temperature):
+def update_fan(database, id, rpm, fan_state, temperature):
     query(database, 'UPDATE fan SET rpm = ?, fan_state = ?, temperature = ? WHERE id = ?',
           (rpm, fan_state, temperature, id))
 
